@@ -1,5 +1,6 @@
 fastapi
 pydantic-settings
+langchain-text-splitters
 uvicorn[standard]
 arxiv
 pymupdf
