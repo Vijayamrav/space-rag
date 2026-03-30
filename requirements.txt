@@ -1,0 +1,17 @@
+fastapi
+pydantic-settings
+uvicorn[standard]
+arxiv
+pymupdf
+sentence-transformers
+pinecone-client
+rank-bm25
+transformers
+torch
+openai                 # OpenRouter uses OpenAI-compatible SDK
+python-dotenv
+httpx
+
+
+
+pcsk_65RZZg_NhGSXb8pWcAusA8gV1hgPbD5NAGxyjRUCAUfjWdhshHVpPVXeGKn7XC6tKPWWz5
