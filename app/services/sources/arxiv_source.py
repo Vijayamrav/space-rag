@@ -32,7 +32,7 @@ def fetch(query: str, max_results: int = 20, retries: int = 3) -> list[PaperReco
                     source            = "arxiv",
                     citation_count    = 0,
                     influential_count = 0,
-                    concept_tags      = [t.term for t in r.categories] if hasattr(r, "categories") else [],
+                    concept_tags      = list(r.categories) if hasattr(r, "categories") else [],
                 ))
             logger.info("arXiv returned %d papers", len(papers))
             return papers

@@ -58,7 +58,7 @@ def fetch(query: str, max_results: int = 20, retries: int = 3) -> list[PaperReco
         except Exception as exc:
             logger.warning("Semantic Scholar attempt %d failed: %s", attempt, exc)
             if attempt < retries:
-                time.sleep(2.0)
+                time.sleep(5.0)  # longer backoff for rate limits
 
     logger.error("Semantic Scholar fetch failed after %d attempts", retries)
     return []

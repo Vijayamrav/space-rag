@@ -14,10 +14,10 @@ from typing import TypedDict
 import fitz
 import httpx
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
 from app.core.pinecone_client import get_index
+from app.core.dependencies import get_embedding_model
 from app.services.sources.aggregator import fetch_and_rank
 from app.services.sources.base import PaperRecord
 
@@ -120,7 +120,7 @@ def chunk_papers(papers: list[PaperRecord], max_workers: int = 8) -> list[ChunkR
 
 def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 64) -> int:
     """Embed chunks and upsert to Pinecone. Returns number of vectors stored."""
-    model = SentenceTransformer(settings.embedding_model)
+    model = get_embedding_model()
     index = get_index()
     total = 0
 

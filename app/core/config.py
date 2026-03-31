@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # OpenRouter
     openrouter_api_key:  str
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    model_name:          str = "stepfun-ai/step-3-5-flash"
+    model_name:          str = "meta-llama/llama-3.1-8b-instruct"
 
     # Pinecone
     pinecone_api_key:     str

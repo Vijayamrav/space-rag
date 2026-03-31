@@ -16,6 +16,7 @@ class IngestResponse(BaseModel):
     papers_fetched: int
     chunks_created: int
     vectors_stored: int
+    message: str = "Ingestion started in background. Check server logs for progress."
 
 
 # ── Query ─────────────────────────────────────────────────────────────────────
