@@ -12,6 +12,11 @@ class IngestRequest(BaseModel):
     max_results: int = Field(10, ge=1, le=100, description="Number of papers to ingest")
 
 
+class BulkIngestRequest(BaseModel):
+    queries:     list[str] = Field(..., description="List of search queries to ingest in parallel")
+    max_results: int        = Field(10, ge=1, le=100, description="Number of papers per query")
+
+
 class IngestResponse(BaseModel):
     papers_fetched: int
     chunks_created: int

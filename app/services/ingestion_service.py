@@ -73,7 +73,14 @@ def _split_text(text: str) -> list[str]:
 
 def _process_paper(paper: PaperRecord) -> list[ChunkRecord]:
     """Download, extract and chunk a single paper. Runs in a thread."""
-    pdf_bytes  = _download_pdf(paper["pdf_url"])
+    # Always use arXiv PDF — publisher URLs block bots with 403.
+    # Skip papers whose ID isn't a real arXiv ID (e.g. OpenAlex W-prefixed IDs).
+    arxiv_id = paper["arxiv_id"]
+    if not arxiv_id or arxiv_id.startswith("W") or not any(c.isdigit() for c in arxiv_id):
+        logger.warning("Skipping non-arXiv paper | id=%s", arxiv_id)
+        return []
+    pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+    pdf_bytes  = _download_pdf(pdf_url)
     text       = _extract_text(pdf_bytes)
     if not text:
         logger.warning("Empty text | arxiv_id=%s — skipping", paper["arxiv_id"])
@@ -112,7 +119,8 @@ def chunk_papers(papers: list[PaperRecord], max_workers: int = 8) -> list[ChunkR
                 logger.error("Failed to chunk %s: %s", arxiv_id, exc)
 
     if not all_chunks:
-        raise RuntimeError("Chunker produced zero chunks")
+        logger.warning("Chunker produced zero chunks — all papers may have been skipped")
+        return []
     return all_chunks
 
 
@@ -161,7 +169,11 @@ def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 64) -> int:
 def run_ingest(query: str, max_results: int) -> dict:
     papers  = fetch_and_rank(query, max_results=max_results)
     if not papers:
-        raise RuntimeError("All sources returned zero papers for query: '{query}'")
+        logger.warning("No papers found for query: '%s'", query)
+        return {"papers_fetched": 0, "chunks_created": 0, "vectors_stored": 0}
     chunks  = chunk_papers(papers)
+    if not chunks:
+        logger.warning("No chunks produced for query: '%s'", query)
+        return {"papers_fetched": len(papers), "chunks_created": 0, "vectors_stored": 0}
     stored  = embed_and_store(chunks)
     return {"papers_fetched": len(papers), "chunks_created": len(chunks), "vectors_stored": stored}
