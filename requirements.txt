@@ -5,7 +5,7 @@ uvicorn[standard]
 arxiv
 pymupdf
 sentence-transformers
-pinecone-client
+pinecone
 rank-bm25
 transformers
 torch
