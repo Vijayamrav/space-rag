@@ -9,22 +9,24 @@ const SUGGESTIONS = [
   'How does JWST observe the early universe?',
 ]
 
-export default function ChatWindow() {
-  const [messages, setMessages] = useState([])
-  const [input, setInput]       = useState('')
-  const [loading, setLoading]   = useState(false)
-  const bottomRef               = useRef(null)
+export default function ChatWindow({ messages, onUpdate }) {
+  const [input,   setInput]   = useState('')
+  const [loading, setLoading] = useState(false)
+  const bottomRef             = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, loading])
 
   async function send(question) {
     const q = question || input.trim()
     if (!q || loading) return
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: q }])
+
+    const updated = [...messages, { role: 'user', content: q }]
+    onUpdate(updated)
     setLoading(true)
+
     try {
       const res  = await fetch('/api/query', {
         method:  'POST',
@@ -32,14 +34,13 @@ export default function ChatWindow() {
         body:    JSON.stringify({ question: q, top_k: 5, use_rerank: true }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, {
+      onUpdate([...updated, {
         role:    'assistant',
         content: data.answer,
-        sources: data.sources,
         model:   data.model,
       }])
     } catch {
-      setMessages(prev => [...prev, {
+      onUpdate([...updated, {
         role:    'assistant',
         content: 'Something went wrong. Make sure the backend is running.',
       }])
