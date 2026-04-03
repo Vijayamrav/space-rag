@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.utils.logging import setup_logging
 from app.utils.errors import generic_exception_handler
@@ -10,6 +11,13 @@ app = FastAPI(
     title="Space RAG API",
     description="Retrieval-Augmented Generation over arXiv space research papers.",
     version="2.0.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.add_exception_handler(Exception, generic_exception_handler)
