@@ -10,6 +10,7 @@ from typing import TypedDict
 from openai import OpenAI
 
 from app.core.config import settings
+from app.core.prompts import SYSTEM_PROMPT
 from app.services.retrieval_service import RetrievedChunk
 
 logger = logging.getLogger(__name__)
@@ -20,15 +21,6 @@ class GeneratorResponse(TypedDict):
     sources: list[dict]
     model:   str
     query:   str
-
-
-_SYSTEM_PROMPT = """\
-You are a scientific research assistant specialising in space science and astrophysics.
-Answer the user's question using ONLY the context passages provided below.
-If the context does not contain enough information to answer, say so clearly.
-Cite the paper title and arXiv ID when referencing specific findings.
-Be concise, accurate, and avoid speculation beyond what the context supports.\
-"""
 
 
 def _build_user_prompt(query: str, chunks: list[RetrievedChunk]) -> str:
@@ -68,7 +60,7 @@ def generate_answer(
         temperature=temperature,
         max_tokens=max_tokens,
         messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": _build_user_prompt(query, chunks)},
         ],
     )

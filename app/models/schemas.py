@@ -17,6 +17,27 @@ class BulkIngestRequest(BaseModel):
     max_results: int        = Field(10, ge=1, le=100, description="Number of papers per query")
 
 
+# arXiv astrophysics categories
+ARXIV_CATEGORIES = {
+    "astro-ph.EP": "Exoplanets",
+    "astro-ph.HE": "High Energy (Black Holes, Neutron Stars)",
+    "astro-ph.GA": "Galaxies & Quasars",
+    "astro-ph.CO": "Cosmology & Dark Matter",
+    "astro-ph.SR": "Stellar & Solar",
+    "astro-ph.IM": "Instrumentation & Methods",
+    "gr-qc":       "General Relativity & Quantum Cosmology",
+    "hep-ph":      "High Energy Physics",
+}
+
+class CategoryIngestRequest(BaseModel):
+    categories:  list[str] = Field(
+        default=list(ARXIV_CATEGORIES.keys()),
+        description="arXiv category identifiers e.g. ['astro-ph.EP', 'astro-ph.HE']",
+        example=["astro-ph.EP", "astro-ph.HE"],
+    )
+    max_results: int = Field(50, ge=1, le=100, description="Papers per category")
+
+
 class IngestResponse(BaseModel):
     papers_fetched: int
     chunks_created: int
