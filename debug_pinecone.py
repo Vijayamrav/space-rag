@@ -15,7 +15,7 @@ print(f"Total vectors  : {stats['total_vector_count']}")
 print(f"Dimension      : {stats['dimension']}")
 
 if stats['total_vector_count'] == 0:
-    print("\n❌ Index is EMPTY — ingest hasn't worked yet.")
+    print("Index is EMPTY — ingest hasn't worked yet.")
 else:
     print(f"\n✅ Index has {stats['total_vector_count']} vectors")
 

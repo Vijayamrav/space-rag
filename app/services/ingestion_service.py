@@ -126,7 +126,7 @@ def chunk_papers(papers: list[PaperRecord], max_workers: int = 8) -> list[ChunkR
 
 # ── Embedding + Upsert ────────────────────────────────────────────────────────
 
-def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 64) -> int:
+def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 32) -> int:
     """Embed chunks and upsert to Pinecone. Returns number of vectors stored."""
     model = get_embedding_model()
     index = get_index()
@@ -159,6 +159,7 @@ def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 64) -> int:
         index.upsert(vectors=vectors)
         total += len(vectors)
         logger.debug("Upserted %d vectors", len(vectors))
+        time.sleep(0.5)
 
     logger.info("Embedding complete | %d vectors stored", total)
     return total
