@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # OpenRouter
     openrouter_api_key:  str
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    model_name:          str = "meta-llama/llama-3.1-8b-instruct"
+    model_name:          str = "qwen/qwen3-235b-a22b"
 
     # Pinecone
     pinecone_api_key:     str

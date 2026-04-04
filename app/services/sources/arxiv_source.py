@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def fetch(query: str, max_results: int = 20, retries: int = 3) -> list[PaperRecord]:
-    client = arxiv.Client(page_size=min(max_results, 100), delay_seconds=1.0, num_retries=retries)
+    client = arxiv.Client(page_size=min(max_results, 100), delay_seconds=3.2, num_retries=retries)
     search = arxiv.Search(query=query, max_results=max_results, sort_by=arxiv.SortCriterion.Relevance)
 
     for attempt in range(1, retries + 1):
