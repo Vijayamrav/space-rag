@@ -54,7 +54,7 @@ export default function App() {
         {/* Logo */}
         <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
           <Telescope size={20} className="text-accent" />
-          <span className="font-semibold text-white">Space RAG</span>
+          <span className="font-semibold text-white">AstroRAG</span>
         </div>
 
         {/* New chat button */}
@@ -94,9 +94,6 @@ export default function App() {
           ))}
         </div>
 
-        <div className="p-4 text-xs text-gray-600 border-t border-border">
-          Powered by arXiv · Pinecone · OpenRouter
-        </div>
       </aside>
 
       {/* Main */}

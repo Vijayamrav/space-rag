@@ -55,7 +55,7 @@ export default function ChatWindow({ messages, onUpdate }) {
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
-            <h1 className="text-3xl font-semibold text-white">Space RAG</h1>
+            <h1 className="text-3xl font-semibold text-white">AstroRAG</h1>
             <p className="text-gray-400 text-sm">Ask anything about space research papers</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
               {SUGGESTIONS.map(s => (
@@ -74,11 +74,9 @@ export default function ChatWindow({ messages, onUpdate }) {
           <div className="max-w-3xl mx-auto w-full">
             {messages.map((m, i) => <MessageBubble key={i} message={m} />)}
             {loading && (
-              <div className="flex gap-4 px-4 py-6 bg-surface">
-                <div className="w-8 h-8 rounded-full bg-input flex items-center justify-center">
-                  <Loader2 size={16} className="text-accent animate-spin" />
-                </div>
-                <div className="flex items-center text-gray-400 text-sm">Thinking...</div>
+              <div className="flex gap-4 px-4 py-3">
+                <Loader2 size={16} className="text-accent animate-spin mt-1" />
+                <span className="text-gray-400 text-sm">Thinking...</span>
               </div>
             )}
             <div ref={bottomRef} />

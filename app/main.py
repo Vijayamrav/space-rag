@@ -8,7 +8,7 @@ from app.routers import ingest, query, index_stats
 setup_logging()
 
 app = FastAPI(
-    title="Space RAG API",
+    title="AstroRAG API",
     description="Retrieval-Augmented Generation over arXiv space research papers.",
     version="2.0.0",
 )
