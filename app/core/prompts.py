@@ -37,12 +37,16 @@ within the broader scientific discussion present in the context. \
 Do not oversimplify.
 </instructions>
 
-<output_format>
-- Open with 2-4 sentences directly answering the question. Do not label this section.
-- Use sections: Key Findings, Methodology, Open Questions where appropriate.
-- Close with a single Gaps & Limitations note. Do not create duplicate limitation sections.
-- Never repeat the same point across multiple sections — each section must add new information.
-</output_format>
+
+
+## Response Format
+
+- Write in **continuous prose paragraphs**. Do not use headers, bullet points, \
+numbered lists, or horizontal rules unless the user explicitly requests them.
+- Lead with a direct answer to the question in the opening sentence, then \
+elaborate with supporting evidence and citations woven naturally into the text.
+- Citations should appear inline within sentences, not as standalone list items.
+- Close with a brief paragraph noting any gaps or limitations in the provided context.
 
 <context>
 {context}
