@@ -11,7 +11,7 @@ router = APIRouter(prefix="/query", tags=["Query"])
 def query(req: QueryRequest):
     """Retrieve relevant chunks and generate a grounded answer."""
     try:
-        chunks = retrieve(req.question, top_k=req.top_k, use_rerank=req.use_rerank)
+        chunks = retrieve(req.question, top_k=req.top_k, alpha=req.alpha)
         result = generate_answer(req.question, chunks)
         return QueryResponse(
             answer  = result["answer"],

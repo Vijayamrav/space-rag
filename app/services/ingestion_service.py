@@ -14,6 +14,7 @@ from typing import TypedDict
 import fitz
 import httpx
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pinecone_text.sparse import BM25Encoder
 
 from app.core.config import settings
 from app.core.pinecone_client import get_index
@@ -22,6 +23,18 @@ from app.services.sources.aggregator import fetch_and_rank
 from app.services.sources.base import PaperRecord
 
 logger = logging.getLogger(__name__)
+
+# Singleton BM25 encoder — fitted lazily on first ingest batch
+_bm25_encoder: BM25Encoder | None = None
+
+
+def _get_bm25_encoder(texts: list[str]) -> BM25Encoder:
+    global _bm25_encoder
+    if _bm25_encoder is None:
+        logger.info("Fitting BM25 encoder on %d texts", len(texts))
+        _bm25_encoder = BM25Encoder()
+        _bm25_encoder.fit(texts)
+    return _bm25_encoder
 
 
 class ChunkRecord(TypedDict):
@@ -126,40 +139,44 @@ def chunk_papers(papers: list[PaperRecord], max_workers: int = 8) -> list[ChunkR
 
 # ── Embedding + Upsert ────────────────────────────────────────────────────────
 
-def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 32) -> int:
-    """Embed chunks and upsert to Pinecone. Returns number of vectors stored."""
-    model = get_embedding_model()
-    index = get_index()
-    total = 0
+def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 96) -> int:
+    """Embed chunks with dense + sparse vectors and upsert to Pinecone. Returns number of vectors stored."""
+    model        = get_embedding_model()
+    index        = get_index()
+    all_texts    = [c["text"] for c in chunks]
+    bm25_encoder = _get_bm25_encoder(all_texts)
+    total        = 0
 
     for start in range(0, len(chunks), batch_size):
-        batch      = chunks[start : start + batch_size]
-        texts      = [c["text"] for c in batch]
-        embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True).tolist()
+        batch          = chunks[start : start + batch_size]
+        texts          = [c["text"] for c in batch]
+        dense_embeddings  = model.encode(texts, show_progress_bar=False, convert_to_numpy=True).tolist()
+        sparse_embeddings = bm25_encoder.encode_documents(texts)
 
         vectors = [
             {
-                "id":     c["chunk_id"],
-                "values": emb,
+                "id":            c["chunk_id"],
+                "values":        dense_emb,
+                "sparse_values": sparse_emb,
                 "metadata": {
-                    "arxiv_id":    c["arxiv_id"],
-                    "title":       c["title"],
-                    "authors":     c["authors"],
-                    "published":   c["published"],
-                    "text":        c["text"],
-                    "chunk_index": c["chunk_index"],
-                    "total_chunks": c["total_chunks"],
-                    "source":          c.get("source", "arxiv"),
-                    "citation_count":  c.get("citation_count", 0),
-                    "concept_tags":    c.get("concept_tags", []),
+                    "arxiv_id":      c["arxiv_id"],
+                    "title":         c["title"],
+                    "authors":       c["authors"],
+                    "published":     c["published"],
+                    "text":          c["text"],
+                    "chunk_index":   c["chunk_index"],
+                    "total_chunks":  c["total_chunks"],
+                    "source":        c.get("source", "arxiv"),
+                    "citation_count": c.get("citation_count", 0),
+                    "concept_tags":  c.get("concept_tags", []),
                 },
             }
-            for c, emb in zip(batch, embeddings)
+            for c, dense_emb, sparse_emb in zip(batch, dense_embeddings, sparse_embeddings)
         ]
         index.upsert(vectors=vectors)
         total += len(vectors)
-        logger.debug("Upserted %d vectors", len(vectors))
-        time.sleep(0.5)
+        logger.debug("Upserted %d vectors (dense + sparse)", len(vectors))
+        time.sleep(0.1)
 
     logger.info("Embedding complete | %d vectors stored", total)
     return total

@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
     # Chunking
     chunk_size:    int = 512
-    chunk_overlap: int = 64
+    chunk_overlap: int = 60
 
     # Retrieval
     top_k: int = 5

@@ -37,7 +37,7 @@ def _ensure_index(pc: Pinecone) -> None:
         pc.create_index(
             name=settings.pinecone_index_name,
             dimension=settings.embedding_dim,
-            metric="cosine",
+            metric="dotproduct",
             spec=ServerlessSpec(cloud="aws", region=settings.pinecone_environment),
         )
     else:

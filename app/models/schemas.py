@@ -48,9 +48,9 @@ class IngestResponse(BaseModel):
 # ── Query ─────────────────────────────────────────────────────────────────────
 
 class QueryRequest(BaseModel):
-    question:   str  = Field(..., description="Natural language question", example="How does JWST detect exoplanet atmospheres?")
-    top_k:      int  = Field(5, ge=1, le=20, description="Number of chunks to retrieve")
-    use_rerank: bool = Field(True, description="Apply BM25 re-ranking on dense results")
+    question:   str   = Field(..., description="Natural language question", example="How does JWST detect exoplanet atmospheres?")
+    top_k:      int   = Field(5, ge=1, le=20, description="Number of chunks to retrieve")
+    alpha:      float = Field(0.75, ge=0.0, le=1.0, description="Hybrid blend: 1.0=pure dense, 0.0=pure sparse BM25")
 
 
 class SourceMeta(BaseModel):

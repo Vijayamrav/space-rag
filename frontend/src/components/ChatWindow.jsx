@@ -31,7 +31,7 @@ export default function ChatWindow({ messages, onUpdate }) {
       const res  = await fetch('/api/query', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ question: q, top_k: 5, use_rerank: true }),
+        body:    JSON.stringify({ question: q, top_k: 5, alpha: 0.75 }),
       })
       const data = await res.json()
       onUpdate([...updated, {
