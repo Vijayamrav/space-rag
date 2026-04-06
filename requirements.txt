@@ -9,10 +9,10 @@ pinecone
 pinecone-text
 rank-bm25
 transformers
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
 openai                 # OpenRouter uses OpenAI-compatible SDK
 python-dotenv
 httpx
-
 
 
