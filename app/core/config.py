@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     embedding_dim:   int = 384
 
     # Chunking
-    chunk_size:    int = 512
-    chunk_overlap: int = 60
+    chunk_size:    int = 700
+    chunk_overlap: int = 90
 
     # Retrieval
     top_k: int = 5

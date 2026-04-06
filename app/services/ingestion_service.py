@@ -119,37 +119,12 @@ def _process_paper(paper: PaperRecord) -> list[ChunkRecord]:
     ]
 
 
-def chunk_papers(papers: list[PaperRecord], max_workers: int = 8) -> list[ChunkRecord]:
-    all_chunks: list[ChunkRecord] = []
-
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futures = {pool.submit(_process_paper, paper): paper["arxiv_id"] for paper in papers}
-        for future in as_completed(futures):
-            arxiv_id = futures[future]
-            try:
-                all_chunks.extend(future.result())
-            except Exception as exc:
-                logger.error("Failed to chunk %s: %s", arxiv_id, exc)
-
-    if not all_chunks:
-        logger.warning("Chunker produced zero chunks — all papers may have been skipped")
-        return []
-    return all_chunks
-
-
-# ── Embedding + Upsert ────────────────────────────────────────────────────────
-
-def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 96) -> int:
-    """Embed chunks with dense + sparse vectors and upsert to Pinecone. Returns number of vectors stored."""
-    model        = get_embedding_model()
-    index        = get_index()
-    all_texts    = [c["text"] for c in chunks]
-    bm25_encoder = _get_bm25_encoder(all_texts)
-    total        = 0
-
+def _embed_and_store_chunks(chunks: list[ChunkRecord], model, index, bm25_encoder, batch_size: int = 96) -> int:
+    """Embed and upsert a list of chunks. Called per-paper as chunks become ready."""
+    total = 0
     for start in range(0, len(chunks), batch_size):
-        batch          = chunks[start : start + batch_size]
-        texts          = [c["text"] for c in batch]
+        batch             = chunks[start : start + batch_size]
+        texts             = [c["text"] for c in batch]
         dense_embeddings  = model.encode(texts, show_progress_bar=False, convert_to_numpy=True).tolist()
         sparse_embeddings = bm25_encoder.encode_documents(texts)
 
@@ -159,16 +134,16 @@ def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 96) -> int:
                 "values":        dense_emb,
                 "sparse_values": sparse_emb,
                 "metadata": {
-                    "arxiv_id":      c["arxiv_id"],
-                    "title":         c["title"],
-                    "authors":       c["authors"],
-                    "published":     c["published"],
-                    "text":          c["text"],
-                    "chunk_index":   c["chunk_index"],
-                    "total_chunks":  c["total_chunks"],
-                    "source":        c.get("source", "arxiv"),
+                    "arxiv_id":       c["arxiv_id"],
+                    "title":          c["title"],
+                    "authors":        c["authors"],
+                    "published":      c["published"],
+                    "text":           c["text"],
+                    "chunk_index":    c["chunk_index"],
+                    "total_chunks":   c["total_chunks"],
+                    "source":         c.get("source", "arxiv"),
                     "citation_count": c.get("citation_count", 0),
-                    "concept_tags":  c.get("concept_tags", []),
+                    "concept_tags":   c.get("concept_tags", []),
                 },
             }
             for c, dense_emb, sparse_emb in zip(batch, dense_embeddings, sparse_embeddings)
@@ -177,21 +152,52 @@ def embed_and_store(chunks: list[ChunkRecord], batch_size: int = 96) -> int:
         total += len(vectors)
         logger.debug("Upserted %d vectors (dense + sparse)", len(vectors))
         time.sleep(0.1)
-
-    logger.info("Embedding complete | %d vectors stored", total)
     return total
+
+
+def run_ingest_pipelined(papers: list[PaperRecord]) -> dict:
+    """
+    Pipelined ingestion: as each paper finishes downloading + chunking,
+    immediately embed and upsert its chunks without waiting for all papers.
+    """
+    model        = get_embedding_model()
+    index        = get_index()
+    # Fit BM25 on abstracts upfront — fast, no PDF needed
+    abstracts    = [p.get("abstract", p["title"]) for p in papers]
+    bm25_encoder = _get_bm25_encoder(abstracts)
+
+    total_chunks  = 0
+    total_vectors = 0
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {pool.submit(_process_paper, paper): paper["arxiv_id"] for paper in papers}
+        for future in as_completed(futures):
+            arxiv_id = futures[future]
+            try:
+                chunks = future.result()
+                if chunks:
+                    stored = _embed_and_store_chunks(chunks, model, index, bm25_encoder)
+                    total_chunks  += len(chunks)
+                    total_vectors += stored
+                    logger.info("Pipelined upsert done | arxiv_id=%s | vectors=%d", arxiv_id, stored)
+            except Exception as exc:
+                logger.error("Failed to process %s: %s", arxiv_id, exc)
+
+    return total_chunks, total_vectors
 
 
 # ── Orchestrator ──────────────────────────────────────────────────────────────
 
 def run_ingest(query: str, max_results: int) -> dict:
-    papers  = fetch_and_rank(query, max_results=max_results)
+    papers = fetch_and_rank(query, max_results=max_results)
     if not papers:
         logger.warning("No papers found for query: '%s'", query)
         return {"papers_fetched": 0, "chunks_created": 0, "vectors_stored": 0}
-    chunks  = chunk_papers(papers)
-    if not chunks:
+
+    total_chunks, total_vectors = run_ingest_pipelined(papers)
+
+    if total_chunks == 0:
         logger.warning("No chunks produced for query: '%s'", query)
         return {"papers_fetched": len(papers), "chunks_created": 0, "vectors_stored": 0}
-    stored  = embed_and_store(chunks)
-    return {"papers_fetched": len(papers), "chunks_created": len(chunks), "vectors_stored": stored}
+
+    return {"papers_fetched": len(papers), "chunks_created": total_chunks, "vectors_stored": total_vectors}
