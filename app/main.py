@@ -1,4 +1,6 @@
 import os
+import sys
+print("==> main.py starting", flush=True)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

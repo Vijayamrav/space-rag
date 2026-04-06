@@ -9,7 +9,6 @@ import logging
 from typing import TypedDict
 
 from pinecone_text.sparse import BM25Encoder
-from sentence_transformers import SentenceTransformer
 
 from app.core.config import settings
 from app.core.dependencies import get_embedding_model
@@ -43,7 +42,7 @@ class RetrievedChunk(TypedDict):
 
 def _hybrid_search(
     query: str,
-    model: SentenceTransformer,
+    model,
     top_k: int,
     alpha: float = 0.75,
 ) -> list[RetrievedChunk]:
